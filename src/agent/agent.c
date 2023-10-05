@@ -1487,22 +1487,23 @@ static int agent_method_set_log_level(
 static int agent_method_get_system_resources(
                 UNUSED sd_bus_message *m, UNUSED void *userdata, UNUSED sd_bus_error *ret_error) {
         _cleanup_sd_bus_message_ sd_bus_message *reply = NULL;
-        uint32_t cpu_number;
-        uint64_t cpu_time;
-        uint64_t memory_total;
-        uint64_t memory_used;
+        uint32_t cpu_number = 0;
+        uint64_t cpu_time = 0;
+        uint64_t memory_total = 0;
+        uint64_t memory_used = 0;
+        long ret = 0;
 
         int r = sd_bus_message_new_method_return(m, &reply);
         if (r < 0) {
                 return sd_bus_reply_method_errorf(reply, SD_BUS_ERROR_FAILED, "Internal error");
         }
 
-        r = sysconf(_SC_NPROCESSORS_ONLN);
-        if (r < 0) {
+        ret = sysconf(_SC_NPROCESSORS_ONLN);
+        if (ret < 0) {
                 return sd_bus_reply_method_errorf(reply, SD_BUS_ERROR_FAILED, "Internal error");
         }
-        assert(r > 0);
-        cpu_number = r;
+        assert(ret > 0);
+        cpu_number = ret;
 
         r = procfs_cpu_get_usage(&cpu_time);
         if (r < 0) {
