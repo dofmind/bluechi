@@ -8,9 +8,7 @@
 
 static uint64_t calc_gcd64(uint64_t a, uint64_t b) {
         while (b > 0) {
-                uint64_t t;
-
-                t = a % b;
+                uint64_t t = a % b;
 
                 a = b;
                 b = t;
@@ -19,13 +17,16 @@ static uint64_t calc_gcd64(uint64_t a, uint64_t b) {
         return a;
 }
 
+#define STAT_BUF_SIZE 512
+#define NSEC_PER_SEC 1000000000ULL
+
 int procfs_cpu_get_usage(uint64_t *ret) {
-        unsigned long user_ticks, nice_ticks, system_ticks, irq_ticks, softirq_ticks, guest_ticks = 0,
-                                                                                      guest_nice_ticks = 0;
-        long ticks_per_second;
-        uint64_t sum, gcd, a, b;
+        unsigned long user_ticks = 0, nice_ticks = 0, system_ticks = 0, irq_ticks = 0, softirq_ticks = 0,
+                      guest_ticks = 0, guest_nice_ticks = 0;
+        long ticks_per_second = 0;
+        uint64_t sum = 0, gcd = 0, a = 0, b = 0;
         _cleanup_fclose_ FILE *f = NULL;
-        char buf[512 - 64];
+        char buf[STAT_BUF_SIZE];
 
         assert(ret);
 
@@ -60,19 +61,22 @@ int procfs_cpu_get_usage(uint64_t *ret) {
                         (uint64_t) softirq_ticks + (uint64_t) guest_ticks + (uint64_t) guest_nice_ticks;
 
         /* Let's reduce this fraction before we apply it to avoid overflows when converting this to μsec */
-        gcd = calc_gcd64(1000000000ULL, ticks_per_second);
+        gcd = calc_gcd64(NSEC_PER_SEC, ticks_per_second);
 
-        a = (uint64_t) 1000000000ULL / gcd;
+        a = (uint64_t) NSEC_PER_SEC / gcd;
         b = (uint64_t) ticks_per_second / gcd;
 
         *ret = DIV_ROUND_UP(sum * a, b);
         return 0;
 }
 
+#define MEMINFO_BUF_SIZE 60
+#define BASE_DECIMAL 10
+
 int procfs_memory_get(uint64_t *ret_total, uint64_t *ret_used) {
         uint64_t mem_total = UINT64_MAX, mem_available = UINT64_MAX;
         _cleanup_fclose_ FILE *f = NULL;
-        char buf[60];
+        char buf[MEMINFO_BUF_SIZE];
 
         f = fopen("/proc/meminfo", "re");
         if (!f) {
@@ -87,7 +91,7 @@ int procfs_memory_get(uint64_t *ret_total, uint64_t *ret_used) {
                 *c = '\0';
 
                 if (streq(buf, "MemTotal")) {
-                        mem_total = strtoul(c + 1, NULL, 10);
+                        mem_total = strtoul(c + 1, NULL, BASE_DECIMAL);
                         if ((errno == ERANGE && mem_total == UINT64_MAX) || (errno != 0 && mem_total == 0)) {
                                 return -errno;
                         }
@@ -95,7 +99,7 @@ int procfs_memory_get(uint64_t *ret_total, uint64_t *ret_used) {
                 }
 
                 if (streq(buf, "MemAvailable")) {
-                        mem_available = strtoul(c + 1, NULL, 10);
+                        mem_available = strtoul(c + 1, NULL, BASE_DECIMAL);
                         if ((errno == ERANGE && mem_available == UINT64_MAX) ||
                             (errno != 0 && mem_available == 0)) {
                                 return -errno;
