@@ -4,7 +4,7 @@
 #include "libbluechi/common/common.h"
 #include "procfs-util.h"
 
-#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#define DIV_ROUND_UP(n, d) (((n) + (d) -1) / (d))
 
 static uint64_t calc_gcd64(uint64_t a, uint64_t b) {
         while (b > 0) {
