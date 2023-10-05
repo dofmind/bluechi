@@ -19,14 +19,18 @@ static uint64_t calc_gcd64(uint64_t a, uint64_t b) {
 
 #define STAT_BUF_SIZE 512
 #define NSEC_PER_SEC 1000000000ULL
+#define BASE_DECIMAL 10
+#define IDLE_INDEX 3
+#define IOWAIT_INDEX 4
+#define STEAL_INDEX 7
 
 int procfs_cpu_get_usage(uint64_t *ret) {
-        unsigned long user_ticks = 0, nice_ticks = 0, system_ticks = 0, irq_ticks = 0, softirq_ticks = 0,
-                      guest_ticks = 0, guest_nice_ticks = 0;
         long ticks_per_second = 0;
         uint64_t sum = 0, gcd = 0, a = 0, b = 0;
         _cleanup_fclose_ FILE *f = NULL;
         char buf[STAT_BUF_SIZE];
+        const char *p = buf;
+        int i = 0;
 
         assert(ret);
 
@@ -39,16 +43,23 @@ int procfs_cpu_get_usage(uint64_t *ret) {
                 return -EINVAL;
         }
 
-        if (sscanf(buf,
-                   "cpu %lu %lu %lu %*u %*u %lu %lu %*u %lu %lu",
-                   &user_ticks,
-                   &nice_ticks,
-                   &system_ticks,
-                   &irq_ticks,
-                   &softirq_ticks,
-                   &guest_ticks,
-                   &guest_nice_ticks) < 5) /* we only insist on the first five fields */ {
-                return -EINVAL;
+        p += strcspn(p, " \t");
+
+        while (*p && *p != '\0') {
+                char *endptr = NULL;
+                uint64_t val = UINT64_MAX;
+
+                val = strtoul(p, &endptr, BASE_DECIMAL);
+                if ((errno == ERANGE && val == UINT64_MAX) || (errno != 0 && val == 0)) {
+                        return -errno;
+                }
+
+                if (i != IDLE_INDEX && i != IOWAIT_INDEX && i != STEAL_INDEX) {
+                        sum += val;
+                }
+
+                p = ++endptr;
+                i++;
         }
 
         ticks_per_second = sysconf(_SC_CLK_TCK);
@@ -56,9 +67,6 @@ int procfs_cpu_get_usage(uint64_t *ret) {
                 return -errno;
         }
         assert(ticks_per_second > 0);
-
-        sum = (uint64_t) user_ticks + (uint64_t) nice_ticks + (uint64_t) system_ticks + (uint64_t) irq_ticks +
-                        (uint64_t) softirq_ticks + (uint64_t) guest_ticks + (uint64_t) guest_nice_ticks;
 
         /* Let's reduce this fraction before we apply it to avoid overflows when converting this to μsec */
         gcd = calc_gcd64(NSEC_PER_SEC, ticks_per_second);
