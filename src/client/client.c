@@ -618,10 +618,10 @@ static int method_get_system_resources_on(Client *client, char *node_name) {
         int r = 0;
         _cleanup_sd_bus_error_ sd_bus_error error = SD_BUS_ERROR_NULL;
         _cleanup_sd_bus_message_ sd_bus_message *result = NULL;
-        uint32_t cpu_number;
-        uint64_t cpu_time;
-        uint64_t memory_total;
-        uint64_t memory_used;
+        uint32_t cpu_number = 0;
+        uint64_t cpu_time = 0;
+        uint64_t memory_total = 0;
+        uint64_t memory_used = 0;
 
         r = assemble_object_path_string(NODE_OBJECT_PATH_PREFIX, node_name, &client->object_path);
         if (r < 0) {
