@@ -1826,20 +1826,25 @@ static int agent_method_switch_controller(sd_bus_message *m, void *userdata, UNU
                                 strerror(-r));
         }
 
-        if (!agent_set_controller_address(agent, dbus_address)) {
-                bc_log_error("Failed to set CONTROLLER ADDRESS");
-                return sd_bus_reply_method_errorf(m, SD_BUS_ERROR_FAILED, "Failed to set CONTROLLER ADDRESS");
+        if (!agent->controller_address || !streq(agent->controller_address, dbus_address)) {
+                if (!agent_set_controller_address(agent, dbus_address)) {
+                        bc_log_error("Failed to set CONTROLLER ADDRESS");
+                        return sd_bus_reply_method_errorf(
+                                        m, SD_BUS_ERROR_FAILED, "Failed to set CONTROLLER ADDRESS");
+                }
+
+                r = sd_bus_emit_properties_changed(
+                                agent->api_bus, BC_AGENT_OBJECT_PATH, AGENT_INTERFACE, "ControllerAddress", NULL);
+                if (r < 0) {
+                        bc_log_errorf("Failed to emit controller address property changed: %s", strerror(-r));
+                }
+
+                bc_log_infof("CONTROLLER ADDRESS changed to %s", dbus_address);
         }
 
-        r = sd_bus_emit_properties_changed(
-                        agent->api_bus, BC_AGENT_OBJECT_PATH, AGENT_INTERFACE, "ControllerAddress", NULL);
-        if (r < 0) {
-                bc_log_errorf("Failed to emit controller address property changed: %s", strerror(-r));
+        if (agent->orch_addr && !streq(agent->orch_addr, dbus_address)) {
+                agent_disconnected(NULL, userdata, NULL);
         }
-
-        bc_log_infof("CONTROLLER ADDRESS changed to %s", dbus_address);
-
-        agent_disconnected(NULL, userdata, NULL);
 
         return sd_bus_reply_method_return(m, "");
 }
