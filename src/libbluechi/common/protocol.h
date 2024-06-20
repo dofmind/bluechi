@@ -10,6 +10,7 @@
 /* Time constants */
 #define USEC_PER_SEC 1000000
 #define USEC_PER_MSEC 1000
+#define NSEC_PER_USEC 1000
 
 /* Configuration defaults */
 #define BC_DEFAULT_PORT "842"
