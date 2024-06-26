@@ -12,13 +12,17 @@ from bluechi.api import Node
 class TestNodeIsDisconnected(unittest.TestCase):
     def test_node_is_disconnected(self):
         n = Node("node-foo")
+        print(f"n.status: {n.status}")
         assert n.status == "online"
 
         timestamp = n.last_seen_timestamp
+        print(f"timestamp: {timestamp}")
 
         # verify that the node is disconnected and LastSeenTimespamp is not
         # updated after more than NodeHeartbeatThreshold seconds have elapsed
         time.sleep(10)
+        print(f"n.last_seen_timestamp: {n.last_seen_timestamp}")
+        print(f"n.status: {n.status}")
         assert n.status == "offline"
         assert n.last_seen_timestamp == timestamp
 
