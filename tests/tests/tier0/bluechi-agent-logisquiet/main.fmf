@@ -1,5 +1,0 @@
-summary: Test if bluechi agent can handle different types of values for LogIsQuiet
-    in the configuration
-tag:
-  - testing-farm-container
-id: 18da5e2a-6c79-490d-99dc-166df3307c2c

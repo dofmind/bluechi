@@ -1,3 +1,0 @@
-summary: Test bluechictl daemon-reload. This test will send an unrunble test will
-    fail at start but then will be change and update with daemon-reload
-id: bd48467d-3c47-491e-ace0-39d146b23ec1
