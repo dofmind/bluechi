@@ -1925,7 +1925,7 @@ static int agent_property_get_status(
 }
 
 /*************************************************************************
- **** org.eclipse.bluechi.Agent.LastSuccessfulHeartbeat ****************
+ **** org.eclipse.bluechi.Agent.DisconnectTimestamp ****************
  *************************************************************************/
 
 static int agent_property_get_disconnect_timestamp(
@@ -1939,6 +1939,23 @@ static int agent_property_get_disconnect_timestamp(
         Agent *agent = userdata;
 
         return sd_bus_message_append(reply, "t", agent->disconnect_timestamp);
+}
+
+/*************************************************************************
+ **** org.eclipse.bluechi.Agent.LastSeen ****************
+ *************************************************************************/
+
+static int agent_property_get_last_seen(
+                UNUSED sd_bus *bus,
+                UNUSED const char *path,
+                UNUSED const char *interface,
+                UNUSED const char *property,
+                sd_bus_message *reply,
+                void *userdata,
+                UNUSED sd_bus_error *ret_error) {
+        Agent *agent = userdata;
+
+        return sd_bus_message_append(reply, "t", agent->connection_last_seen);
 }
 
 /*************************************************************************
@@ -1988,6 +2005,7 @@ static const sd_bus_vtable agent_vtable[] = {
                         agent_property_get_disconnect_timestamp,
                         0,
                         SD_BUS_VTABLE_PROPERTY_EXPLICIT),
+        SD_BUS_PROPERTY("LastSeenTimestamp", "t", agent_property_get_last_seen, 0, SD_BUS_VTABLE_PROPERTY_EXPLICIT),
         SD_BUS_PROPERTY("ControllerAddress",
                         "s",
                         NULL,
