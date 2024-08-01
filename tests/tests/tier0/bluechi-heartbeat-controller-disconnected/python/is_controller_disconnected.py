@@ -35,6 +35,8 @@ class TestControllerIsDisconnected(unittest.TestCase):
 
         # verify that the controller is disconnected after more than
         # ControllerHeartbeatThreshold seconds have elapsed
+        print(f"timestamp: {self.timestamp}, {timestamp}, {self.timestamp - timestamp}")
+        print(f"state: {self.state}")
         assert self.timestamp - timestamp > 6000000
         assert self.state == "offline"
 
