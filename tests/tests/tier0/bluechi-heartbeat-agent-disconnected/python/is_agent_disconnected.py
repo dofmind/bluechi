@@ -29,7 +29,7 @@ class TestAgentIsDisconnected(unittest.TestCase):
         assert agent.status == "online"
 
         agent.on_status_changed(on_state_change)
-        timestamp = round(time.time() * 1000000)
+        timestamp = agent.last_seen_timestamp
 
         loop.run()
 
