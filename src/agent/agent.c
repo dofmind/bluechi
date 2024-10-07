@@ -122,10 +122,11 @@ static int agent_disconnected(UNUSED sd_bus_message *message, void *userdata, UN
         if (r < 0) {
                 bc_log_errorf("Failed to emit status property changed: %s", strerror(-r));
         }
-        r = get_time_seconds(&agent->disconnect_timestamp);
-        if (r < 0) {
-                bc_log_errorf("Failed to get current time on agent disconnect: %s", strerror(-r));
+        uint64_t now = get_time_micros();
+        if (now == 0) {
+                bc_log_error("Failed to get current time on agent disconnect");
         }
+        agent->disconnect_timestamp = now;
 
         /* try to reconnect right away */
         agent_reconnect(agent);
@@ -1980,8 +1981,30 @@ static int agent_property_get_disconnect_timestamp(
                 void *userdata,
                 UNUSED sd_bus_error *ret_error) {
         Agent *agent = userdata;
+        uint64_t disconnect_timestamp = agent->disconnect_timestamp ?
+                        micros_to_wall_clock(agent->disconnect_timestamp) :
+                        0;
 
-        return sd_bus_message_append(reply, "t", agent->disconnect_timestamp);
+        return sd_bus_message_append(reply, "t", disconnect_timestamp);
+}
+
+/*************************************************************************
+ **** org.eclipse.bluechi.Agent.LastSeenTimestamp ****************
+ *************************************************************************/
+
+static int agent_property_get_last_seen(
+                UNUSED sd_bus *bus,
+                UNUSED const char *path,
+                UNUSED const char *interface,
+                UNUSED const char *property,
+                sd_bus_message *reply,
+                void *userdata,
+                UNUSED sd_bus_error *ret_error) {
+        Agent *agent = userdata;
+        uint64_t last_seen = agent->controller_last_seen ? micros_to_wall_clock(agent->controller_last_seen) :
+                                                           0;
+
+        return sd_bus_message_append(reply, "t", last_seen);
 }
 
 /*************************************************************************
@@ -2031,11 +2054,7 @@ static const sd_bus_vtable agent_vtable[] = {
                         agent_property_get_disconnect_timestamp,
                         0,
                         SD_BUS_VTABLE_PROPERTY_EXPLICIT),
-        SD_BUS_PROPERTY("LastSeenTimestamp",
-                        "t",
-                        NULL,
-                        offsetof(Agent, controller_last_seen),
-                        SD_BUS_VTABLE_PROPERTY_EXPLICIT),
+        SD_BUS_PROPERTY("LastSeenTimestamp", "t", agent_property_get_last_seen, 0, SD_BUS_VTABLE_PROPERTY_EXPLICIT),
         SD_BUS_PROPERTY("ControllerAddress",
                         "s",
                         NULL,

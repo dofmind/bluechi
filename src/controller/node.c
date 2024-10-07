@@ -1071,7 +1071,9 @@ static int node_property_get_last_seen(
                 void *userdata,
                 UNUSED sd_bus_error *ret_error) {
         Node *node = userdata;
-        return sd_bus_message_append(reply, "t", node->last_seen);
+        uint64_t last_seen = node->last_seen ? micros_to_wall_clock(node->last_seen) : 0;
+
+        return sd_bus_message_append(reply, "t", last_seen);
 }
 
 
