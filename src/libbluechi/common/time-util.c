@@ -12,26 +12,18 @@
 
 uint64_t get_time_micros() {
         struct timespec now;
-        if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-                return 0;
-        }
-        uint64_t now_micros = now.tv_sec * sec_to_microsec_multiplier +
-                        (uint64_t) ((double) now.tv_nsec * nanosec_to_microsec_multiplier);
-        return now_micros;
+
+        assert(clock_gettime(CLOCK_REALTIME, &now) == 0);
+
+        return timespec_to_micros(&now);
 }
 
-int get_time_seconds(time_t *ret_time_seconds) {
-        if (ret_time_seconds == NULL) {
-                return -EINVAL;
-        }
-
+uint64_t get_time_micros_monotonic() {
         struct timespec now;
-        int r = clock_gettime(CLOCK_REALTIME, &now);
-        if (r < 0) {
-                return r;
-        }
-        *ret_time_seconds = now.tv_sec;
-        return 0;
+
+        assert(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
+
+        return timespec_to_micros(&now);
 }
 
 uint64_t finalize_time_interval_micros(int64_t start_time_micros) {
@@ -40,6 +32,20 @@ uint64_t finalize_time_interval_micros(int64_t start_time_micros) {
 
 double micros_to_millis(uint64_t time_micros) {
         return (double) time_micros * microsec_to_millisec_multiplier;
+}
+
+uint64_t timespec_to_micros(const struct timespec *ts) {
+        assert(ts);
+
+        if (ts->tv_sec < 0 || ts->tv_nsec < 0) {
+                return USEC_INFINITY;
+        }
+
+        if ((uint64_t) ts->tv_sec > (UINT64_MAX - (ts->tv_nsec / NSEC_PER_USEC)) / USEC_PER_SEC) {
+                return USEC_INFINITY;
+        }
+
+        return (uint64_t) ts->tv_sec * USEC_PER_SEC + (uint64_t) ts->tv_nsec / NSEC_PER_USEC;
 }
 
 char *get_formatted_log_timestamp() {
