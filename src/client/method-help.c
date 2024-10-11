@@ -53,6 +53,8 @@ void usage_bluechi() {
         printf("    usage: get-default [nodename]\n");
         printf("  - set-default: set a default target of connected node\n");
         printf("    usage: set-default [nodename] [target]\n");
+        printf("  - wait-for: wait for bluechi-agent to be the desired status\n");
+        printf("    usage: wait-for [offline|online]\n");
 }
 
 int method_help(UNUSED Command *command, UNUSED void *userdata) {

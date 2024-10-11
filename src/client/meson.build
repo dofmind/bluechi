@@ -23,6 +23,7 @@ client_src = [
   'method-reset-failed.c',
   'method-daemon-reload.c',
   'method-default-target.c',
+  'method-wait-for.c',
   'usage.c',
 ]
 
