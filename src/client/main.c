@@ -26,6 +26,7 @@
 #include "method-reset-failed.h"
 #include "method-status.h"
 #include "method-unit-lifecycle.h"
+#include "method-wait-for.h"
 
 #define OPT_NONE 0u
 #define OPT_HELP 1u << 0u
@@ -65,6 +66,7 @@ const Method methods[] = {
         { "get-default",     1, 1,       OPT_NONE,                                method_get_default_target, usage_method_get_default_target },
         { "set-default",     2, 3,       OPT_NONE,                                method_set_default_target, usage_method_set_default_target },
         { "version",         0, 0,       OPT_NONE,                                method_version,            usage_bluechi                   },
+        { "wait-for",        1, 1,       OPT_NONE,                                method_wait_for,           usage_method_wait_for           },
         { NULL,              0, 0,       0,                                       NULL,                      NULL                            }
 };
 
